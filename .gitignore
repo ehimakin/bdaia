@@ -1,0 +1,25 @@
+# OS
+.DS_Store
+
+# Env
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.envrc
+
+# Node
+node_modules/
+dist/
+build/
+.expo/
+.expo-shared/
+.next/
+.vite/
+
+# Logs
+*.log
