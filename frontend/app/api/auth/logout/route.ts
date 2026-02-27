@@ -5,21 +5,20 @@ import { sha256 } from "@/lib/auth";
 import { SESSION_COOKIE_NAME } from "@/lib/session";
 
 export async function POST() {
-  // cookies() is sync in Next
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const raw = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-  // Always clear cookie in the response
+  // Always clear cookie in the response (even if DB fails)
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE_NAME, "", {
     path: "/",
     expires: new Date(0),
     httpOnly: true,
     sameSite: "lax",
-    secure: true, // ok on https prod; if local dev breaks, make this conditional
+    secure: process.env.NODE_ENV === "production",
   });
 
-  // Best-effort DB cleanup (never crash logout)
+  // Best-effort DB cleanup
   try {
     if (raw) {
       const tokenHash = sha256(raw);
@@ -27,7 +26,7 @@ export async function POST() {
     }
   } catch (err) {
     console.error("Logout cleanup failed:", err);
-    // Don't fail logout for DB issues
+    // don't fail logout
   }
 
   return res;
