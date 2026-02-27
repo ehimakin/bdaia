@@ -16,9 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="bg-brand-800 text-white text-sm">
           <div className="mx-auto max-w-6xl px-4 py-2 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 opacity-90">
-              <span>📍 London, UK</span>
+              <span>📍 Leeds, UK</span>
               <span>✉️ info@bdaia.org</span>
-              <span>📞 +44 20 0000 0000</span>
+              <span>📞 +44 11 3 222 1110</span>
             </div>
 
             <div className="flex items-center gap-3">
