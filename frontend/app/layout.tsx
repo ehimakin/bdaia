@@ -5,7 +5,7 @@ import NavLink from "./components/NavLink";
 
 export const metadata = {
   title: "British Dental AI Association",
-  description: "Education, community and standards for dental professionals.",
+  description: "Research. Education. Community",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
