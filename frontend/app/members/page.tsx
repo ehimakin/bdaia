@@ -19,9 +19,7 @@ export default async function MembersHome() {
         <form
           action={async () => {
             "use server";
-            // simple server action logout:
-            const res = await fetch(`${process.env.APP_URL}/api/auth/logout`, { method: "POST" });
-            void res;
+            await fetch("/api/auth/logout", { method: "POST" });
             redirect("/members/login");
           }}
           className="mt-6"
