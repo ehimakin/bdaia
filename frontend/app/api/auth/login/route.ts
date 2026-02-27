@@ -1,0 +1,46 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { newToken, sha256, verifyPassword } from "@/lib/auth";
+import { SESSION_COOKIE_NAME } from "@/lib/session";
+
+const schema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => null);
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+
+  const { email, password } = parsed.data;
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+
+  // For now: allow login if ACTIVE (skip email verify until you wire email)
+  if (user.status !== "ACTIVE") {
+    return NextResponse.json({ error: "Membership not active yet" }, { status: 403 });
+  }
+
+  const ok = await verifyPassword(password, user.passwordHash);
+  if (!ok) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+
+  const rawSessionToken = newToken();
+  const tokenHash = sha256(rawSessionToken);
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+
+  await prisma.session.create({ data: { userId: user.id, tokenHash, expiresAt } });
+
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set(SESSION_COOKIE_NAME, rawSessionToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    expires: expiresAt,
+  });
+
+  return res;
+}
