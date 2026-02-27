@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
+import { headers } from "next/headers";
+
 
 export default async function MembersHome() {
   const user = await getCurrentUser();
@@ -19,13 +21,25 @@ export default async function MembersHome() {
         <form
           action={async () => {
             "use server";
-            await fetch("/api/auth/logout", { method: "POST" });
+
+            const h = await headers();
+            const host = h.get("host");
+
+            // Fallback: if host missing, just redirect
+            if (!host) {
+              redirect("/members/login");
+            }
+
+            const proto = host.includes("localhost") ? "http" : "https";
+            await fetch(`${proto}://${host}/api/auth/logout`, { method: "POST" });
+
             redirect("/members/login");
           }}
           className="mt-6"
         >
           <button className="btn-outline">Log out</button>
         </form>
+
       </div>
     </main>
   );
