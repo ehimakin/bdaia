@@ -48,3 +48,34 @@ model VerificationToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
+model Course {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  summary     String
+  description String?
+  cpdHours    Int
+  level       String   // "Beginner" | "Intermediate" | "Advanced"
+  tags        String[] // Postgres array
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  resources   CourseResource[]
+}
+
+model CourseResource {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  title     String
+  kind      String   // "pdf" | "video" | "link" | etc.
+  // Points to your storage key (NOT a public URL)
+  storageKey String
+  mimeType  String?
+  sizeBytes Int?
+  isMembersOnly Boolean @default(true)
+
+  createdAt DateTime @default(now())
+}
