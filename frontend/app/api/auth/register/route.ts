@@ -10,30 +10,38 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => null);
-  const parsed = schema.safeParse(body);
+  try {
+    const body = await req.json().catch(() => null);
+    const parsed = schema.safeParse(body);
 
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+
+    const { fullName, email, password } = parsed.data;
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+    }
+
+    const passwordHash = await hashPassword(password);
+
+    await prisma.user.create({
+      data: {
+        fullName,
+        email,
+        passwordHash,
+        status: "ACTIVE",
+      },
+    });
+
+    return NextResponse.json({ ok: true }, { status: 201 });
+  } catch (err: any) {
+    console.error("REGISTER ERROR:", err);
+    return NextResponse.json(
+      { error: err?.message ?? "Server error during registration" },
+      { status: 500 }
+    );
   }
-
-  const { fullName, email, password } = parsed.data;
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return NextResponse.json({ error: "Email already registered" }, { status: 409 });
-  }
-
-  const passwordHash = await hashPassword(password);
-
-  await prisma.user.create({
-    data: {
-      fullName,
-      email,
-      passwordHash,
-      status: "ACTIVE" // for now, so dummy users can login immediately
-    },
-  });
-
-  return NextResponse.json({ ok: true });
 }

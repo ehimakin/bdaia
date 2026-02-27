@@ -17,22 +17,40 @@ export default function MembershipPage() {
     setLoading(true);
     setError(null);
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName, email, password }),
-    });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName, email, password }),
+      });
 
-    const data = await res.json().catch(() => ({}));
-    setLoading(false);
+      const raw = await res.text(); // read once
+      let data: any = null;
+      try {
+        data = raw ? JSON.parse(raw) : null;
+      } catch {
+        data = null;
+      }
 
-    if (!res.ok) {
-      setError(data?.error ?? "Registration failed");
-      return;
+      if (!res.ok) {
+        const msg =
+          data?.error ||
+          data?.message ||
+          (raw && raw.length < 200 ? raw : null) ||
+          `Registration failed (HTTP ${res.status})`;
+
+        setError(msg);
+        return;
+      }
+
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err?.message ?? "Network error");
+    } finally {
+      setLoading(false);
     }
-
-    setSuccess(true);
   }
+
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-16">
