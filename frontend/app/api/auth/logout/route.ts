@@ -8,26 +8,13 @@ export async function POST() {
   const cookieStore = await cookies();
   const raw = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-  // Always clear cookie in the response (even if DB fails)
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(SESSION_COOKIE_NAME, "", {
-    path: "/",
-    expires: new Date(0),
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
-
-  // Best-effort DB cleanup
-  try {
-    if (raw) {
-      const tokenHash = sha256(raw);
-      await prisma.session.deleteMany({ where: { tokenHash } });
-    }
-  } catch (err) {
-    console.error("Logout cleanup failed:", err);
-    // don't fail logout
+  if (raw) {
+    const tokenHash = sha256(raw);
+    await prisma.session.deleteMany({ where: { tokenHash } });
   }
 
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set(SESSION_COOKIE_NAME, "", { path: "/", expires: new Date(0) });
   return res;
 }
+

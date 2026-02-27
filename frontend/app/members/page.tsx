@@ -1,8 +1,4 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
-import { sha256 } from "@/lib/auth";
-import { SESSION_COOKIE_NAME } from "@/lib/session";
 import { getCurrentUser } from "@/lib/session";
 
 export default async function MembersHome() {
@@ -23,22 +19,11 @@ export default async function MembersHome() {
         <form
           action={async () => {
             "use server";
-
-            const cookieStore = cookies();
-            const raw = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-
-            // Best effort: delete session in DB
-            if (raw) {
-              const tokenHash = sha256(raw);
-              await prisma.session.deleteMany({ where: { tokenHash } });
-            }
-
-            // Clear cookie
-            cookieStore.set(SESSION_COOKIE_NAME, "", { path: "/", expires: new Date(0) });
-
+            // simple server action logout:
+            const res = await fetch(`${process.env.APP_URL}/api/auth/logout`, { method: "POST" });
+            void res;
             redirect("/members/login");
           }}
-
           className="mt-6"
         >
           <button className="btn-outline">Log out</button>
